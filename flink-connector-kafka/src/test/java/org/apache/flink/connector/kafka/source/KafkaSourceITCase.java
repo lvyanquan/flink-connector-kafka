@@ -29,7 +29,17 @@ import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
+import org.apache.flink.connector.kafka.testutils.DockerImageVersions;
+import org.apache.flink.connector.kafka.testutils.KafkaSourceExternalContextFactory;
 import org.apache.flink.connector.kafka.testutils.KafkaSourceTestEnv;
+import org.apache.flink.connector.testframe.environment.MiniClusterTestEnvironment;
+import org.apache.flink.connector.testframe.external.DefaultContainerizedExternalSystem;
+import org.apache.flink.connector.testframe.junit.annotations.TestContext;
+import org.apache.flink.connector.testframe.junit.annotations.TestEnv;
+import org.apache.flink.connector.testframe.junit.annotations.TestExternalSystem;
+import org.apache.flink.connector.testframe.junit.annotations.TestSemantics;
+import org.apache.flink.connector.testframe.testsuites.SourceTestSuiteBase;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
@@ -53,6 +63,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -66,6 +78,8 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.apache.flink.connector.kafka.testutils.KafkaSourceExternalContext.SplitMappingMode.PARTITION;
+import static org.apache.flink.connector.kafka.testutils.KafkaSourceExternalContext.SplitMappingMode.TOPIC;
 import static org.apache.flink.streaming.connectors.kafka.KafkaTestBase.kafkaServer;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -392,44 +406,40 @@ public class KafkaSourceITCase {
         }
     }
 
-    //        Release these tests after https://issues.apache.org/jira/browse/FLINK-36845 release.
-    //
-    //        /** Integration test based on connector testing framework. */
-    //        @Nested
-    //        class IntegrationTests extends SourceTestSuiteBase<String> {
-    //            @TestSemantics
-    //            CheckpointingMode[] semantics = new CheckpointingMode[]
-    //     {CheckpointingMode.EXACTLY_ONCE};
-    //
-    //            // Defines test environment on Flink MiniCluster
-    //            @SuppressWarnings("unused")
-    //            @TestEnv
-    //            MiniClusterTestEnvironment flink = new MiniClusterTestEnvironment();
-    //
-    //            // Defines external system
-    //            @TestExternalSystem
-    //            DefaultContainerizedExternalSystem<KafkaContainer> kafka =
-    //                    DefaultContainerizedExternalSystem.builder()
-    //                            .fromContainer(
-    //                                    new KafkaContainer(
-    //                                            DockerImageName.parse(DockerImageVersions.KAFKA)))
-    //                            .build();
-    //
-    //            // Defines 2 External context Factories, so test cases will be invoked twice using
-    // these two
-    //            // kinds of external contexts.
-    //            @SuppressWarnings("unused")
-    //            @TestContext
-    //            KafkaSourceExternalContextFactory singleTopic =
-    //                    new KafkaSourceExternalContextFactory(
-    //                            kafka.getContainer(), Collections.emptyList(), PARTITION);
-    //
-    //            @SuppressWarnings("unused")
-    //            @TestContext
-    //            KafkaSourceExternalContextFactory multipleTopic =
-    //                    new KafkaSourceExternalContextFactory(
-    //                            kafka.getContainer(), Collections.emptyList(), TOPIC);
-    //        }
+    /** Integration test based on connector testing framework. */
+    @Nested
+    class IntegrationTests extends SourceTestSuiteBase<String> {
+        @TestSemantics
+        CheckpointingMode[] semantics = new CheckpointingMode[] {CheckpointingMode.EXACTLY_ONCE};
+
+        // Defines test environment on Flink MiniCluster
+        @SuppressWarnings("unused")
+        @TestEnv
+        MiniClusterTestEnvironment flink = new MiniClusterTestEnvironment();
+
+        // Defines external system
+        @TestExternalSystem
+        DefaultContainerizedExternalSystem<KafkaContainer> kafka =
+                DefaultContainerizedExternalSystem.builder()
+                        .fromContainer(
+                                new KafkaContainer(
+                                        DockerImageName.parse(DockerImageVersions.KAFKA)))
+                        .build();
+
+        // Defines 2 External context Factories, so test cases will be invoked twice using these two
+        // kinds of external contexts.
+        @SuppressWarnings("unused")
+        @TestContext
+        KafkaSourceExternalContextFactory singleTopic =
+                new KafkaSourceExternalContextFactory(
+                        kafka.getContainer(), Collections.emptyList(), PARTITION);
+
+        @SuppressWarnings("unused")
+        @TestContext
+        KafkaSourceExternalContextFactory multipleTopic =
+                new KafkaSourceExternalContextFactory(
+                        kafka.getContainer(), Collections.emptyList(), TOPIC);
+    }
 
     // -----------------
 

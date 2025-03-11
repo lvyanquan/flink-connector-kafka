@@ -178,7 +178,7 @@ public class KafkaSinkITCase extends TestLogger {
     /** Integration test based on connector testing framework. */
     @SuppressWarnings("unused")
     @Nested
- class IntegrationTests extends SinkTestSuiteBase<String> {
+    class IntegrationTests extends SinkTestSuiteBase<String> {
         // Defines test environment on Flink MiniCluster
         @TestEnv MiniClusterTestEnvironment flink = new MiniClusterTestEnvironment();
 

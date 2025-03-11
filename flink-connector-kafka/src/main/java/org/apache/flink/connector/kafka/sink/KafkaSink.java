@@ -73,7 +73,8 @@ import java.util.Properties;
 @PublicEvolving
 public class KafkaSink<IN>
         implements LineageVertexProvider,
-                TwoPhaseCommittingStatefulSink<IN, KafkaWriterState, KafkaCommittable>, SupportsPostCommitTopology<KafkaCommittable> {
+                TwoPhaseCommittingStatefulSink<IN, KafkaWriterState, KafkaCommittable>,
+                SupportsPostCommitTopology<KafkaCommittable> {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaSink.class);
     private final DeliveryGuarantee deliveryGuarantee;
 
